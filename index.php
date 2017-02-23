@@ -1,15 +1,26 @@
 <?php
 /*
-	e107 website system, daily comics
-	based heavily on Daily Dilbert Plus by Richard Perry, http://www.greycube.com/
-	Richard gave credit to Kimmo of http://www.jernstrom.org/
-*/
+	 e107 website system, daily comics
+	 based heavily on Daily Dilbert Plus by Richard Perry, http://www.greycube.com/
+	 Richard gave credit to Kimmo of http://www.jernstrom.org/
+
+	 v0.20, August 24, 2006
+	 - changes: added cache support
+
+	 v0.10, August 23, 2006
+	 - initial release
+ */
 require_once("../../class2.php") ;
 require_once(HEADERF) ;
-
+ini_set('max_execution_time', '600') ;
+$version = "0.20" ;
 $index = 0 ;
 $CARTOONS = Array() ;
 include("cartoons.php") ;
+// attempt to make the cache folder and chmod 777 if it doesn't already exist
+// we'll use the @ prefix to supress any errors
+@mkdir("cache") ;
+@chmod(0777,"cache") ;
 //[[[ date processing
 $today = date("Y-m-d") ;
 $todaySec = date("U") ;
@@ -21,8 +32,8 @@ if (!$date) {
 }
 foreach ($CARTOONS as $index => $cartoon) {
 	$CARTOONS[$index]['date'] = date($cartoon['dateformat'],strtotime($date)) ;
-//	$CARTOONS[$index]['prevday'] = date($cartoon['dateformat'],strtotime($prevday)) ;
-//	$CARTOONS[$index]['nextday'] = date($cartoon['dateformat'],strtotime($nextday)) ;
+	//	$CARTOONS[$index]['prevday'] = date($cartoon['dateformat'],strtotime($prevday)) ;
+	//	$CARTOONS[$index]['nextday'] = date($cartoon['dateformat'],strtotime($nextday)) ;
 }
 
 $prevday = date("Y-m-d",mktime (0,0,0,substr($date, 5, 2),substr($date, 8, 2)-1,substr($date, 0, 4))) ;
@@ -30,7 +41,7 @@ $nextday = date("Y-m-d",mktime (0,0,0,substr($date, 5, 2),substr($date, 8, 2)+1,
 $nextdaySec = date("U",mktime (0,0,0,substr($date, 5, 2),substr($date, 8, 2)+1,substr($date, 0, 4))) ;
 //]]]
 
-$text = '<div style="font-family: tahoma; font-size: 9px; text-align:center">Daily Cartoons by <a href="http://iandouglas.com/">Ian Douglas</a><br />Based on Daily Dilbert Plus By Richard Perry<br /></div><table style="width:95%; border:0;"><tr><td style="text-align:left"><b><a href="'.$PHP_SELF.'?date='.$prevday.'">Previous Day</a></b></td><td style="text-align:right">'.($nextdaySec <= $todaySec ? '<b><a href="'.$PHP_SELF.'?date='.$nextday.'">Next Day</a></b>' : '').'</td></tr></table><br />' ;
+$text = '<div style="font-family: tahoma; font-size: 9px; text-align:center">Daily Cartoons v'.$version.' by <a href="http://iandouglas.com/">Ian Douglas</a><br />Based on Daily Dilbert Plus By Richard Perry<br /></div><table style="width:95%; border:0;"><tr><td style="text-align:left"><b><a href="'.$PHP_SELF.'?date='.$prevday.'">Previous Day</a></b></td><td style="text-align:right">'.($nextdaySec <= $todaySec ? '<b><a href="'.$PHP_SELF.'?date='.$nextday.'">Next Day</a></b>' : '').'</td></tr></table><br />' ;
 
 $template = '<table style="width:95%; border:0;"><tr><td style="text-align:center"><a href="{{{SITE}}}" target="new">{{{CARTOON}}}</a></td></tr></table><br />' ;
 foreach ($CARTOONS as $index => $cartoon) {
@@ -47,18 +58,55 @@ foreach ($CARTOONS as $index => $cartoon) {
 		// draw image here
 		preg_match($cartoon['regexp'],$tmp,$matches) ;
 		if ($matches[0]) {
-			$cartoon_text = str_replace("{{{CARTOON}}}",$cartoon['cartoon'],$cartoon_text) ;
+			$cartoon_file = $cartoon['fetch'] ;
 			$matchindex = 0 ;
+			for($i=1; $i < count($matches); $i++) {
+				$cartoon_file = str_replace("{{{".$i."}}}",$matches[$i],$cartoon_file) ;
+			}
+			if ($cartoon['cache']) {
+				$bits = explode("/",$cartoon_file) ;
+				$cartoon_cachefile = $bits[count($bits)-1] ; // get just the last filename portion
+				$cartoon_cachefile = str_replace(".","_",$cartoon['name']) . "__" . $date . "__" . $cartoon_cachefile ;
+				$cartoon_cachefile = str_replace(" ","_",$cartoon_cachefile) ;
+				$cartoon_cachefile = str_replace("\\","",$cartoon_cachefile) ;
+				$cartoon_cachefile = str_replace(":","",$cartoon_cachefile) ;
+				$cartoon_cachefile = str_replace("/","",$cartoon_cachefile) ;
+				// this will create a filename like "Daily_Dilbert__2006-08-24__dilbert20060824.gif"
+				if (file_exists("cache") && file_exists("cache/".$cartoon_cachefile)) {
+					$cartoon_file = "cache/".$cartoon_cachefile ;
+				} elseif (file_exists("cache")) {
+					// save a copy of the cartoon
+					$fh_cartoon = fopen($cartoon_file,"rb") ;
+					if ($fh_cartoon) {
+						$cartoon_binary = '' ;
+						$byte_count = 0 ;
+						while (!feof($fh_cartoon)) {
+							$cartoon_binary .= @fread($fh_cartoon,1) ;
+							$byte_count++ ;
+						}
+						fclose($fh_cartoon) ;
+						$fh_cartoon = @fopen("cache/".$cartoon_cachefile,"wb") ;
+						if ($fh_cartoon) {
+							fwrite($fh_cartoon,$cartoon_binary,$byte_count) ;
+							fclose($fh_cartoon) ;
+						}
+						$cartoon_file = "cache/".$cartoon_cachefile ;
+					}
+				}
+			}
+			$cartoon_text = str_replace("{{{CARTOON}}}",$cartoon['cartoon'],$cartoon_text) ;
+			$cartoon_text = str_replace("{{{FETCH}}}",$cartoon_file,$cartoon_text) ;
+			// reapply the {{{#}}} filters, if any
 			for($i=1; $i < count($matches); $i++) {
 				$cartoon_text = str_replace("{{{".$i."}}}",$matches[$i],$cartoon_text) ;
 			}
 		} else {
 			// preg_match didn't find any matches
-			$cartoon_text = str_replace("{{{CARTOON}}}","Could not parse this cartoon's regular expression.",$cartoon_text) ;
+			$cartoon_text = str_replace("{{{CARTOON}}}",(isset($cartoon['404']) ? '<img src="404comics/'.$cartoon['404'].'" border="0" alt="comic not found (regexp failed)" />' : "Could not parse this cartoon's regular expression."),$cartoon_text) ;
 		}
 	} else {
 		// couldn't open page, either fopen isn't allowed to open url's or the page is 404, etc
-		$cartoon_text = str_replace("{{{CARTOON}}}","Could not open <a href=\"$url\">$url</a> for parsing.",$cartoon_text) ;
+		$cartoon_text = str_replace("{{{CARTOON}}}",(isset($cartoon['404']) ? '<img src="404comics/'.$cartoon['404'].'" border="0" alt="comic not found (404)" />' : "Could not open <a href=\"$url\">$url</a> for parsing."),$cartoon_text) ;
 	}
 	$cartoon_text = str_replace("{{{SITE}}}",$cartoon['site'],$cartoon_text) ;
 	$text .= "\n$cartoon_text</p>\n" ;
@@ -68,5 +116,8 @@ $text .= '<table style="width:95%; border:0;"><tr><td style="text-align:left"><b
 $ns->tablerender("Daily Cartoons", $text);
 
 echo "\r\n<!--\r\n = Daily Cartoons for E107 v1.0, by Ian Douglas, www.iandouglas.com, based on DAILY DILBERT PLUS BY RICHARD PERRY =\r\n -->\r\n";
+require_once(FOOTERF);
+?>
+n -->\r\n";
 require_once(FOOTERF);
 ?>
