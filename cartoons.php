@@ -154,17 +154,6 @@ $CARTOONS[$index]['cartoon'] = '<img src="{{{FETCH}}}" border="0">' ;
 $CARTOONS[$index]['cache'] = 1 ;
 $CARTOONS[$index]['404'] = '404OverTheHedge.gif' ;
 $index++ ;//]]]
-//[[[ pc and pixel
-$CARTOONS[$index]['name'] = "PC and Pixel" ;
-$CARTOONS[$index]['site'] = "http://www.comics.com/wash/pcnpixel/" ;
-$CARTOONS[$index]['url'] = 'http://www.comics.com/wash/pcnpixel/archive/pcnpixel-{{{DATE}}}.html' ;
-$CARTOONS[$index]['dateformat'] = "Ymd" ;
-$CARTOONS[$index]['regexp'] = '/img src="\/wash\/pcnpixel\/archive\/images\/([^"]*)/i' ;
-$CARTOONS[$index]['fetch'] = 'http://www.comics.com/wash/pcnpixel/archive/images/{{{1}}}' ;
-$CARTOONS[$index]['cartoon'] = '<img src="{{{FETCH}}}" border="0">' ;
-$CARTOONS[$index]['cache'] = 1 ;
-$CARTOONS[$index]['404'] = '404PCnPixel.gif' ;
-$index++ ;//]]]
 //[[[ pickels
 $CARTOONS[$index]['name'] = "Pickles" ;
 $CARTOONS[$index]['site'] = "http://www.comics.com/wash/pickles/" ;

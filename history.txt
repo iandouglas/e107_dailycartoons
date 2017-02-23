@@ -1,0 +1,33 @@
+New in Version 0.25
+- cache checking
+	Version 0.20 wouldn't check to see if it had already cached the cartoon
+	before opening the cartoon's web page to extract the filename to see if it
+	already existed. Adding code to check the cache folder *before* opening the
+	cartoon's web page has significantly decreased the processessing time.
+	The limitation on this cache check is that if you change the 'name' element
+	for a specific cartoon, is that cached items use the 'name' element as part
+	of the cache filename. If you alter the 'name' element, the code will fail
+	to locate older cached files. On operating systems that have case-sensitive
+	file systems, this can impact even changing a cartoon name from "My Cartoon"
+	to "my cartoon". Windows-hosted systems may or may not be affected by
+	case-sensitivity issues, but Unix/Linux/BSD systems generally will be
+	impacted.
+- removed "PC and Pixel" cartoon from cartoons.php
+	The author has slipped behind a few days and was always generating a 404
+	error when trying to fetch a cartoon based on "today's" date.
+
+New in Version 0.20
+- caching
+  The tarball now includes a 'cache' folder which you'll need to set the
+  permissions to 777 using the CHMOD command in your FTP/ssh program. The
+  script will *attempt* to save a copy of the cartoon graphic on your server,
+  but after a while this could really add up to a lot of disk space, so be
+  sure your hosting account can handle the load, or just delete older graphics
+  every month or so.
+- handling 404 and regular expression issues
+  If the script can't apply a regular expression on a downloaded cartoon page,
+  or if the cartoon page is simply unable to be opened, it will show a graphic
+  of your choice from the '404comics' page. I used a graphic editor with the
+  'Comic Sans MS' font to create my own goofy 'comic is missing' images.
+
+

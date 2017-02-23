@@ -1,4 +1,4 @@
-This is version 0.20 of Daily Cartoons; please check iandouglas.com for newer
+This is version 0.25 of Daily Cartoons; please check iandouglas.com for newer
 versions.
 
 What is this Plugin?
@@ -30,19 +30,9 @@ Installation:
   from indexing any pages under the 'e107_plugins' path
 
 
-New in Version 0.20
-- caching
-  The tarball now includes a 'cache' folder which you'll need to set the
-  permissions to 777 using the CHMOD command in your FTP/ssh program. The
-  script will *attempt* to save a copy of the cartoon graphic on your server,
-  but after a while this could really add up to a lot of disk space, so be
-  sure your hosting account can handle the load, or just delete older graphics
-  every month or so.
-- handling 404 and regular expression issues
-  If the script can't apply a regular expression on a downloaded cartoon page,
-  or if the cartoon page is simply unable to be opened, it will show a graphic
-  of your choice from the '404comics' page. I used a graphic editor with the
-  'Comic Sans MS' font to create my own goofy 'comic is missing' images.
+New in Version ____
+- please consult the history.txt file for new information on changes in this
+	and other versions.
 
 
 Adding New Cartoons:
@@ -104,9 +94,10 @@ Limitations:
 - This plugin cannot currently get into site that require a login of any type.
   That's not even on the to-do list.
 - You'll need to have 'allow_url_fopen' turned 'On' in your php.ini settings,
-  since the script uses fopen() to grab the comic archives. I haven't tested
-  whether this works by using ini_set() or not, but would appreciate hearing
-  from anyone that has tested this either way.
+  since the script uses fopen() to grab the comic archives. This cannot be set
+	via ini_set or .htaccess, it can ONLY be turned 'On' in your php.ini file. A
+	future version may include code to get around this limitation.
+
 
 To-Do List:
 - make the configuration a little less daunting
