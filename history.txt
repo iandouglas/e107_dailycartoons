@@ -1,3 +1,14 @@
+New in Version 0.29
+- fopen() workaround
+	Version 0.29 uses fsockopen() for downloading comic pages and cartoon
+	images. The code will autodetect whether "allow_url_fopen" is turned on in
+	php.ini or not, and if not, will fallback to use the fsockcomm.
+	If this autodetection does not work for you, look for this line of code
+	around line 78:
+		//$fopen_check = 'Off' ;
+	and remove the // comment markers. This will force the code to use the
+	fsockopen() workaround.
+
 New in Version 0.25
 - cache checking
 	Version 0.20 wouldn't check to see if it had already cached the cartoon

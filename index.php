@@ -4,7 +4,11 @@
 	based heavily on Daily Dilbert Plus by Richard Perry, http://www.greycube.com/
 	Richard gave credit to Kimmo of http://www.jernstrom.org/
 
+	v0.29, September 23, 2006
+	- workaround for those that don't have fopen() support for opening URL's
+
 	v0.25, September 15, 2006
+	- check cache for a cartoon before loading cartoon's web page
 	- changes: check cache for cartoon file existance BEFORE downloading the cartoon URL
 		- this should speed up processing *significantly*
 	- include the regexp/404 text message under the 404 error graphic so the user can see why the cartoon didn't load
@@ -18,7 +22,7 @@
 require_once("../../class2.php") ;
 require_once(HEADERF) ;
 ini_set('max_execution_time', '600') ;
-$version = "0.25" ;
+$version = "0.29" ;
 $index = 0 ;
 $CARTOONS = Array() ;
 include("cartoons.php") ;
@@ -70,7 +74,19 @@ foreach ($CARTOONS as $index => $cartoon) {
 	}
 	if (!$done) {
 		$url = str_replace("{{{DATE}}}",$cartoon['date'],$cartoon['url']) ;
-		$fh = @fopen($url,"r") ;
+		$fopen_check = ini_get('allow_url_fopen') ;
+		//$fopen_check = 'Off' ;
+		if ($fopen_check == 'On' || $fopen_check == 1 || $fopen_check == 'true') {
+			$fh = @fopen($url,"r") ;
+		} else {
+			preg_match('/http:\/\/([^\/]*)(.*)/i', $url, $matches) ;
+			$fh = fsockopen($matches[1], 80, $errno, $errstr, 10) ;
+			fputs($fh, "GET /{$matches[2]} HTTP/1.0\r\n") ;
+			fputs($fh, "Host: {$matches[1]}\r\n") ;
+			fputs($fh, "Referer: http://{$matches[1]}\r\n") ;
+			fputs($fh, "User-Agent: DailyCartoons v$version\r\n\r\n");
+		}
+
 		if ($fh) { //[[[
 			while (!feof($fh)) {
 				$tmp .= fread($fh, 2048) ;
@@ -78,6 +94,8 @@ foreach ($CARTOONS as $index => $cartoon) {
 			fclose ($fh) ;
 			$bytes = strlen($tmp) ;
 			// draw image here
+			$tmp = str_replace("\r"," ",$tmp) ;
+			$tmp = str_replace("\n"," ",$tmp) ;
 			preg_match($cartoon['regexp'],$tmp,$matches) ;
 			if ($matches[0]) { //[[[ regexp worked
 				$cartoon_file = $cartoon['fetch'] ;
@@ -98,15 +116,31 @@ foreach ($CARTOONS as $index => $cartoon) {
 						$cartoon_file = "cache/".$cartoon_cachefile ;
 					} elseif (file_exists("cache")) {
 						// save a copy of the cartoon
-						$fh_cartoon = fopen($cartoon_file,"rb") ;
+						if ($fopen_check == 'On' || $fopen_check == 1 || $fopen_check == 'true') {
+							$fh_cartoon = fopen($cartoon_file,"rb") ;
+						} else {
+							preg_match('/http:\/\/([^\/]*)/(.*)/i', $cartoon_file, $matches2) ;
+							$fh_cartoon = fsockopen($matches2[1], 80, $errno, $errstr, 10) ;
+							if (substr($matches2[1],-1,1) == '/') {
+								$matches2[1] = substr($matches2[1],0,strlen($matches2[1] - 1)) ;
+							}
+							fputs($fh_cartoon, "GET /{$matches2[2]} HTTP/1.0\r\n") ;
+							fputs($fh_cartoon, "Host: {$matches2[1]}\r\n") ;
+							fputs($fh_cartoon, "Referer: http://{$matches2[1]}\r\n") ;
+							fputs($fh_cartoon, "User-Agent: DailyCartoons v$version\r\n\r\n");
+						}
 						if ($fh_cartoon) {
 							$cartoon_binary = '' ;
 							$byte_count = 0 ;
 							while (!feof($fh_cartoon)) {
-								$cartoon_binary .= @fread($fh_cartoon,1) ;
+								$cartoon_binary .= @fread($fh_cartoon,1024) ;
 								$byte_count++ ;
 							}
 							fclose($fh_cartoon) ;
+							if ($fopen_check != 'On' && $fopen_check != 1 && $fopen_check != 'true') {
+								// strip headers from cached graphic
+								list($junk,$cartoon_binary) = explode("\r\n\r\n",$cartoon_binary) ;
+							}
 							$fh_cartoon = @fopen("cache/".$cartoon_cachefile,"wb") ;
 							if ($fh_cartoon) {
 								fwrite($fh_cartoon,$cartoon_binary,$byte_count) ;
@@ -141,8 +175,5 @@ $text .= '<table style="width:95%; border:0;"><tr><td style="text-align:left"><b
 $ns->tablerender("Daily Cartoons", $text);
 
 echo "\r\n<!--\r\n = Daily Cartoons for E107 v1.0, by Ian Douglas, www.iandouglas.com, based on DAILY DILBERT PLUS BY RICHARD PERRY =\r\n -->\r\n";
-require_once(FOOTERF);
-?>
-n -->\r\n";
 require_once(FOOTERF);
 ?>

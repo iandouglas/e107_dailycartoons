@@ -1,4 +1,4 @@
-This is version 0.25 of Daily Cartoons; please check iandouglas.com for newer
+This is version 0.29 of Daily Cartoons; please check iandouglas.com for newer
 versions.
 
 What is this Plugin?
@@ -74,7 +74,7 @@ If you can't figure out the regular expression for a particular comic, contact
 me and I'll help out as best I can. Don't send me messages saying "Can you add
 ______?" because that's just rude. Help me out a little and at least provide a
 URL to where the cartoons come from and how to access an archive of previous
-cartoons. I've included a LOT of cartoons in v0.20 which are some of my
+cartoons. I've included a LOT of cartoons as of v0.20 which are some of my
 all-time favorites like Adam@Home, Dilbert, Foxtrot, Drabble, Rose is Rose,
 and so on. Most of these, you'll see from my example cartoons.php, either come
 from comics.com or gocomics.com, so you can just copy and paste my examples
@@ -93,10 +93,6 @@ Limitations:
   /dailycartoon/ page so the graphics get cached.
 - This plugin cannot currently get into site that require a login of any type.
   That's not even on the to-do list.
-- You'll need to have 'allow_url_fopen' turned 'On' in your php.ini settings,
-  since the script uses fopen() to grab the comic archives. This cannot be set
-	via ini_set or .htaccess, it can ONLY be turned 'On' in your php.ini file. A
-	future version may include code to get around this limitation.
 
 
 To-Do List:
